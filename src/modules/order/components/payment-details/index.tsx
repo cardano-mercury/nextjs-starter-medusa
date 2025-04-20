@@ -51,6 +51,8 @@ const PaymentDetails = ({ order }: PaymentDetailsProps) => {
                 </Text>
               </div>
             </div>
+            <pre className="d-block w-full">{JSON.stringify(payment.payment_session, null, 2)}</pre>
+
           </div>
         )}
       </div>

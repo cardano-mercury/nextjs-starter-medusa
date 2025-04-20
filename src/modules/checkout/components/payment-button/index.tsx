@@ -1,12 +1,53 @@
 "use client"
 
-import { isManual, isStripe } from "@lib/constants"
+import { isManual, isStripe, isMercury } from "@lib/constants"
 import { placeOrder } from "@lib/data/cart"
 import { HttpTypes } from "@medusajs/types"
 import { Button } from "@medusajs/ui"
 import { useElements, useStripe } from "@stripe/react-stripe-js"
 import React, { useState } from "react"
 import ErrorMessage from "../error-message"
+
+import { CardanoWallet, useWallet } from "@meshsdk/react"
+import { MeshTxBuilder } from "@meshsdk/core"
+import { sdk } from "@lib/config"
+
+type SlotConfig = {
+  zeroTime: number
+  zeroSlot: number
+  slotLength: number
+}
+
+const wallet_network = process.env.WALLET_NETWORK || "preprod"
+
+const slotConfig = (() => {
+  switch (wallet_network) {
+    case "mainnet":
+      return {
+        zeroTime: 1596059091000,
+        zeroSlot: 4492800,
+        slotLength: 1000,
+      }
+    case "preprod":
+      return {
+        zeroTime: 1655769600000,
+        zeroSlot: 86400,
+        slotLength: 1000,
+      }
+    case "preview":
+      return {
+        zeroTime: 1666656000000,
+        zeroSlot: 0,
+        slotLength: 1000,
+      }
+    default:
+      return {
+        zeroTime: 0,
+        zeroSlot: 0,
+        slotLength: 1000,
+      }
+  }
+})()
 
 type PaymentButtonProps = {
   cart: HttpTypes.StoreCart

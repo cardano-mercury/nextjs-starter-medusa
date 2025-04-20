@@ -1,7 +1,11 @@
 "use client"
 
 import { RadioGroup } from "@headlessui/react"
-import { isStripe as isStripeFunc, paymentInfoMap } from "@lib/constants"
+import {
+  isStripe as isStripeFunc,
+  isMercury as isMercuryFunc,
+  paymentInfoMap,
+} from "@lib/constants"
 import { initiatePaymentSession } from "@lib/data/cart"
 import { CheckCircleSolid, CreditCard } from "@medusajs/icons"
 import { Button, Container, Heading, Text, clx } from "@medusajs/ui"
@@ -12,6 +16,12 @@ import PaymentContainer, {
 import Divider from "@modules/common/components/divider"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
+import {
+  CardanoWallet,
+  MeshProvider,
+  useWallet,
+  WalletContext,
+} from "@meshsdk/react"
 
 const Payment = ({
   cart,
@@ -20,12 +30,28 @@ const Payment = ({
   cart: any
   availablePaymentMethods: any[]
 }) => {
+  return (
+    <MeshProvider>
+      <Page cart={cart} availablePaymentMethods={availablePaymentMethods} />
+    </MeshProvider>
+  )
+}
+
+export default Payment
+
+function Page({
+  cart,
+  availablePaymentMethods,
+}: {
+  cart: any
+  availablePaymentMethods: any[]
+}) {
   const activeSession = cart.payment_collection?.payment_sessions?.find(
     (paymentSession: any) => paymentSession.status === "pending"
   )
 
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [paymentError, setError] = useState<string | null>(null)
   const [cardBrand, setCardBrand] = useState<string | null>(null)
   const [cardComplete, setCardComplete] = useState(false)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(
@@ -39,6 +65,8 @@ const Payment = ({
   const isOpen = searchParams.get("step") === "payment"
 
   const isStripe = isStripeFunc(selectedPaymentMethod)
+
+  const isMercury = isMercuryFunc(selectedPaymentMethod)
 
   const setPaymentMethod = async (method: string) => {
     setError(null)
@@ -181,7 +209,7 @@ const Payment = ({
           )}
 
           <ErrorMessage
-            error={error}
+            error={paymentError}
             data-testid="payment-method-error-message"
           />
 
@@ -230,11 +258,16 @@ const Payment = ({
                       <CreditCard />
                     )}
                   </Container>
-                  <Text>
-                    {isStripeFunc(selectedPaymentMethod) && cardBrand
-                      ? cardBrand
-                      : "Another step will appear"}
-                  </Text>
+                  {isStripeFunc(selectedPaymentMethod) && cardBrand ? (
+                    <Text>{cardBrand}</Text>
+                  ) : (
+                    <div>
+                      <Text>
+                        {activeSession?.data.ada_amount} &#x20B3; to{" "}
+                        {activeSession?.data.address}
+                      </Text>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -257,5 +290,3 @@ const Payment = ({
     </div>
   )
 }
-
-export default Payment
